@@ -15,7 +15,7 @@ let boardState = [
 function handleSelect(cell) {
     if (isGameOver) return;
 
-    // Если кликнули по уже выбранной — снимаем выделение
+    // фокус по фигуре
     if (selectedCell === cell) {
         clearHighlights();
         selectedCell.classList.remove('selected');
@@ -28,7 +28,7 @@ function handleSelect(cell) {
             executeMove(selectedCell, cell);
             clearHighlights();
         } else {
-            // Если кликнули на другую свою фигуру — переключаем выбор
+            // фокус на другую фигуру
             if (cell.dataset.color === currentTurn) {
                 selectedCell.classList.remove('selected');
                 clearHighlights();
@@ -48,7 +48,7 @@ function handleSelect(cell) {
     }
 }
 
-// Функция поиска всех возможных ходов
+// функция поиска всех возможных ходов
 function showPossibleMoves(fromCell) {
     const allCells = document.querySelectorAll('.cell');
     const fR = parseInt(fromCell.dataset.row);
@@ -66,7 +66,7 @@ function showPossibleMoves(fromCell) {
             if (target === "") {
                 toCell.classList.add('possible-move');
             } else {
-                // Проверяем, что в клетке именно ВРАГ
+                // проверка наличия врага на клетке
                 const isTargetWhite = target === target.toUpperCase();
                 if (isWhite !== isTargetWhite) {
                     toCell.classList.add('possible-attack');
@@ -76,7 +76,7 @@ function showPossibleMoves(fromCell) {
     });
 }
 
-// Очистка подсказок
+// очистка подсказок ходов
 function clearHighlights() {
     document.querySelectorAll('.cell').forEach(cell => {
         cell.classList.remove('possible-move');
@@ -93,7 +93,7 @@ function makeBotMove() {
     const cells = Array.from(document.querySelectorAll('.cell'));
 
     cells.forEach(fromCell => {
-        // Проверяем, что фигура черная
+        // проверка черных фигур (для бота)
         if (fromCell.dataset.color === 'black') {
             const fR = parseInt(fromCell.dataset.row);
             const fC = parseInt(fromCell.dataset.col);
@@ -102,15 +102,15 @@ function makeBotMove() {
                 const tR = parseInt(toCell.dataset.row);
                 const tC = parseInt(toCell.dataset.col);
 
-                // Важнейшая проверка: бот может ходить только по правилам canMove
+                // приписка правил canMove для бота
                 if (canMove(fromCell, toCell, boardState)) {
                     const targetPiece = boardState[tR][tC];
 
-                    // Бот НЕ должен есть свои фигуры
+                    // ограничение для бота, чтобы не ел своих
                     const isTargetBlack = targetPiece !== "" && targetPiece === targetPiece.toLowerCase();
 
                     if (!isTargetBlack) {
-                        // Вес хода: 20 за короля, 10 за фигуру, 1 за пустую клетку
+                        // приоритеты хода: 20 за короля, 10 за фигуру, 1 за пустую клетку
                         let weight = 1;
                         if (targetPiece !== "") {
                             weight = (targetPiece.toLowerCase() === 'k') ? 20 : 10;
@@ -133,7 +133,7 @@ function makeBotMove() {
 
         // Выполняем ход только после небольшой паузы для плавности
         setTimeout(() => {
-            // Перед ходом бота убедимся, что выделение снято
+            
             if (selectedCell) {
                 selectedCell.classList.remove('selected');
                 selectedCell = null;
@@ -150,14 +150,14 @@ function executeMove(from, to) {
     const tR = to.dataset.row, tC = to.dataset.col;
     const pieceChar = boardState[fR][fC];
 
-    // 1. Сначала меняем данные
+    // 1. изменение данных в памяти
     boardState[tR][tC] = pieceChar;
     boardState[fR][fC] = '';
 
     const fromRect = from.getBoundingClientRect();
     const toRect = to.getBoundingClientRect();
 
-    // 2. Создаем анимацию (ghost)
+    // 2. анимация передвижения (фантомная фигура)
     const ghost = document.createElement('div');
     ghost.className = 'dragging-piece';
     ghost.dataset.color = currentTurn;
@@ -178,7 +178,7 @@ function executeMove(from, to) {
         ghost.style.top = toRect.top + 'px';
     }, 10);
 
-    // 3. ЗАВЕРШЕНИЕ ХОДА (через 310мс)
+    // 3. завершение хода через 310мс
     setTimeout(() => {
         if (document.body.contains(ghost)) {
             document.body.removeChild(ghost);
@@ -188,7 +188,7 @@ function executeMove(from, to) {
         // чтобы визуальное состояние совпало с boardState
         createBoard(boardElement, boardState, handleSelect);
 
-        // Логика игры
+        // логика игры
         if (to.dataset.type === 'k') endGame(currentTurn);
         if (pieceChar.toLowerCase() === 'p' && (tR == 0 || tR == 7)) {
             handlePromotion(tR, tC, currentTurn);
@@ -201,7 +201,7 @@ function executeMove(from, to) {
         logEntry.textContent = moveText;
         document.getElementById('move-history').prepend(logEntry);
 
-        // Смена хода
+        // смена хода
         currentTurn = (currentTurn === 'white') ? 'black' : 'white';
         updateTurnUI();
 
@@ -267,4 +267,5 @@ function finalizePromotion(type) {
 }
 
 // Запуск игры
+
 createBoard(boardElement, boardState, handleSelect);
