@@ -4,7 +4,7 @@ let selectedCell = null;
 let currentTurn = 'white';
 let isGameOver = false;
 
-// Начальное состояние
+// поле боя
 let boardState = [
     ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
     ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
@@ -30,15 +30,14 @@ function createBoard() {
             cell.dataset.row = r;
             cell.dataset.col = c;
 
-            // ДОБАВЛЯЕМ НОТАЦИЮ (Цифры слева, Буквы снизу)
-            // Цифры (на первой колонке каждого ряда)
+            // индексы клеток
             if (c === 0) {
                 const label = document.createElement('span');
                 label.className = 'label-row';
                 label.textContent = 8 - r;
                 cell.appendChild(label);
             }
-            // Буквы (на последнем ряду каждой колонки)
+            // буквы клеток
             if (r === 7) {
                 const label = document.createElement('span');
                 label.className = 'label-col';
@@ -79,14 +78,13 @@ function handleSelect(cell) {
 }
 
 function isPathClear(fR, fC, tR, tC) {
-    // Определяем направление движения (-1, 0 или 1)
+    // направления движений
     const dR = Math.sign(tR - fR);
     const dC = Math.sign(tC - fC);
 
     let currR = fR + dR;
     let currC = fC + dC;
 
-    // Идем по клеткам от начальной до конечной (не включая их)
     while (currR !== tR || currC !== tC) {
         if (boardState[currR][currC] !== '') {
             return false; // Путь прегражден!
@@ -119,7 +117,7 @@ function canMove(from, to) {
             const dir = color === 'white' ? -1 : 1;
             const startRow = color === 'white' ? 6 : 1;
 
-            // Ход на 1 клетку
+            // ход на 1 клетку
             if (fC === tC && !to.textContent && dr === dir) return true;
             // Ход на 2 клетки (только с начальной позиции и если путь пуст)
             if (fC === tC && fR === startRow && dr === 2 * dir && !to.textContent) {
@@ -127,7 +125,7 @@ function canMove(from, to) {
                 const middleRow = fR + dir;
                 if (boardState[middleRow][fC] === '') return true;
             }
-            // Бой
+
             if (Math.abs(dc) === 1 && dr === dir && to.dataset.color && to.dataset.color !== color) return true;
             return false;
 
@@ -144,7 +142,7 @@ function executeMove(from, to) {
     const fR = from.dataset.row, fC = from.dataset.col;
     const tR = to.dataset.row, tC = to.dataset.col;
 
-    // Проверка на съедение короля
+    // проверка на съедение короля
     if (to.dataset.type === 'k') {
         endGame(currentTurn);
     }
@@ -170,5 +168,6 @@ function endGame(winner) {
     document.getElementById('status').innerHTML = `<span style="color:#e74c3c">${winnerText}</span>`;
     alert("Шах и мат! " + winnerText);
 }
+
 
 createBoard();
