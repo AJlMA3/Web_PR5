@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Шахматы</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="main-wrapper">
+
+        <div class="side-panel">
+            <h3>Режим игры:</h3>
+            <select id="game-mode" class="mode-select">
+                <option value="pvp">Игрок vs Игрок</option>
+                <option value="pve">Игрок vs Бот</option>
+            </select>
+
+            <hr>
+            <h3>История ходов:</h3>
+            <div id="move-history"></div>
+            <button onclick="location.reload()" class="btn-reset">Новая игра</button>
+        </div>
+
+        <div class="game-container">
+            <h1>Шахматы</h1>
+
+            <div class="board-wrapper">
+                <div id="board" class="chess-board"></div>
+            </div>
+
+            <div class="info-panel">
+                <h2 id="status">Ход: <span id="turn-display">Белые</span></h2>
+            </div>
+
+            <div id="promotion-overlay" class="overlay hidden">
+                <div class="promotion-menu">
+                    <h3>Выберите фигуру</h3>
+                    <div class="promotion-options">
+                        <div class="promo-choice" data-type="q"></div>
+                        <div class="promo-choice" data-type="r"></div>
+                        <div class="promo-choice" data-type="b"></div>
+                        <div class="promo-choice" data-type="n"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/pieces.js"></script>
+    <script src="js/board.js"></script>
+    <script src="js/game.js"></script>
+</body>
+
+</html>

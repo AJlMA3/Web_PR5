@@ -1,0 +1,174 @@
+const boardElement = document.getElementById('board');
+const turnDisplay = document.getElementById('turn-display');
+let selectedCell = null;
+let currentTurn = 'white';
+let isGameOver = false;
+
+// Начальное состояние
+let boardState = [
+    ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+    ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+    Array(8).fill(''), Array(8).fill(''), Array(8).fill(''), Array(8).fill(''),
+    ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+    ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']
+];
+
+const piecesUnicode = {
+    'r': '♜', 'n': '♞', 'b': '♝', 'q': '♚', 'k': '♛', 'p': '♟',
+    'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♔', 'K': '♕', 'P': '♙'
+};
+
+function createBoard() {
+    boardElement.innerHTML = '';
+
+    const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+
+    for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+            const cell = document.createElement('div');
+            cell.className = `cell ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+            cell.dataset.row = r;
+            cell.dataset.col = c;
+
+            // ДОБАВЛЯЕМ НОТАЦИЮ (Цифры слева, Буквы снизу)
+            // Цифры (на первой колонке каждого ряда)
+            if (c === 0) {
+                const label = document.createElement('span');
+                label.className = 'label-row';
+                label.textContent = 8 - r;
+                cell.appendChild(label);
+            }
+            // Буквы (на последнем ряду каждой колонки)
+            if (r === 7) {
+                const label = document.createElement('span');
+                label.className = 'label-col';
+                label.textContent = letters[c];
+                cell.appendChild(label);
+            }
+
+            const char = boardState[r][c];
+            if (char) {
+                const pieceSpan = document.createElement('span');
+                pieceSpan.textContent = piecesUnicode[char];
+                cell.appendChild(pieceSpan);
+
+                cell.dataset.color = char === char.toLowerCase() ? 'black' : 'white';
+                cell.dataset.type = char.toLowerCase();
+            }
+
+            cell.onclick = () => handleSelect(cell);
+            boardElement.appendChild(cell);
+        }
+    }
+}
+
+function handleSelect(cell) {
+    if (isGameOver) return;
+
+    if (selectedCell) {
+        if (canMove(selectedCell, cell)) {
+            executeMove(selectedCell, cell);
+        } else {
+            selectedCell.classList.remove('selected');
+            selectedCell = null;
+        }
+    } else if (cell.dataset.color === currentTurn) {
+        selectedCell = cell;
+        cell.classList.add('selected');
+    }
+}
+
+function isPathClear(fR, fC, tR, tC) {
+    // Определяем направление движения (-1, 0 или 1)
+    const dR = Math.sign(tR - fR);
+    const dC = Math.sign(tC - fC);
+
+    let currR = fR + dR;
+    let currC = fC + dC;
+
+    // Идем по клеткам от начальной до конечной (не включая их)
+    while (currR !== tR || currC !== tC) {
+        if (boardState[currR][currC] !== '') {
+            return false; // Путь прегражден!
+        }
+        currR += dR;
+        currC += dC;
+    }
+    return true;
+}
+
+function canMove(from, to) {
+    const fR = parseInt(from.dataset.row);
+    const fC = parseInt(from.dataset.col);
+    const tR = parseInt(to.dataset.row);
+    const tC = parseInt(to.dataset.col);
+    const type = from.dataset.type;
+    const color = from.dataset.color;
+
+    if (to.dataset.color === color) return false;
+
+    const dr = tR - fR;
+    const dc = tC - fC;
+
+    if (type !== 'n' && type !== 'k') {
+        if (!isPathClear(fR, fC, tR, tC)) return false;
+    }
+
+    switch (type) {
+        case 'p': // ПЕШКА
+            const dir = color === 'white' ? -1 : 1;
+            const startRow = color === 'white' ? 6 : 1;
+
+            // Ход на 1 клетку
+            if (fC === tC && !to.textContent && dr === dir) return true;
+            // Ход на 2 клетки (только с начальной позиции и если путь пуст)
+            if (fC === tC && fR === startRow && dr === 2 * dir && !to.textContent) {
+                // Проверка, чтобы не перепрыгивала фигуру
+                const middleRow = fR + dir;
+                if (boardState[middleRow][fC] === '') return true;
+            }
+            // Бой
+            if (Math.abs(dc) === 1 && dr === dir && to.dataset.color && to.dataset.color !== color) return true;
+            return false;
+
+        case 'r': return (dr === 0 || dc === 0);
+        case 'n': return (Math.abs(dr) === 2 && Math.abs(dc) === 1) || (Math.abs(dr) === 1 && Math.abs(dc) === 2);
+        case 'b': return Math.abs(dr) === Math.abs(dc);
+        case 'q': return Math.abs(dr) === Math.abs(dc) || dr === 0 || dc === 0;
+        case 'k': return Math.abs(dr) <= 1 && Math.abs(dc) <= 1;
+    }
+    return false;
+}
+
+function executeMove(from, to) {
+    const fR = from.dataset.row, fC = from.dataset.col;
+    const tR = to.dataset.row, tC = to.dataset.col;
+
+    // Проверка на съедение короля
+    if (to.dataset.type === 'k') {
+        endGame(currentTurn);
+    }
+
+    boardState[tR][tC] = boardState[fR][fC];
+    boardState[fR][fC] = '';
+
+    // Смена хода и обновление текста
+    currentTurn = (currentTurn === 'white') ? 'black' : 'white';
+    turnDisplay.textContent = (currentTurn === 'white') ? 'Белые' : 'Черные';
+    turnDisplay.style.background = (currentTurn === 'white') ? '#f1c40f' : '#333';
+    turnDisplay.style.color = (currentTurn === 'white') ? '#000' : '#fff';
+
+    selectedCell.classList.remove('selected');
+    selectedCell = null;
+    createBoard();
+}
+
+function endGame(winner) {
+    isGameOver = true;
+    boardElement.classList.add('king-down');
+    const winnerText = winner === 'white' ? 'БЕЛЫЕ ПОБЕДИЛИ!' : 'ЧЕРНЫЕ ПОБЕДИЛИ!';
+    document.getElementById('status').innerHTML = `<span style="color:#e74c3c">${winnerText}</span>`;
+    alert("Шах и мат! " + winnerText);
+}
+
+createBoard();
